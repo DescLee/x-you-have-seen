@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark"><title>Seen · 你的 X 浏览历史</title>
+  <link rel="icon" href="icons/32.png"><link rel="stylesheet" href="ui.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="history.html" aria-label="Seen 首页"><span class="brand-mark">s<span>·</span></span><span>seen<span class="brand-dot">.</span></span></a>
+      <p class="brand-description">看过的，找得回来。</p>
+      <nav aria-label="主导航">
+        <button id="nav-history" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.5-6.2L3 8m0-5v5h5M12 7v5l3 2"/></svg>浏览历史<span id="nav-count">0</span></button>
+        <button id="nav-settings" class="nav-item"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></svg>偏好与数据</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="local-badge"><span class="status-dot"></span>只存于此浏览器</div><p>没有账号，没有上传。<br>你的浏览记忆，属于你。</p><span class="version">SEEN FOR X &nbsp; / &nbsp; 0.1.0</span></div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><div class="breadcrumb"><span class="compact-brand">seen.</span><span class="desktop-crumb">个人空间 <span>/</span> </span><span id="crumb">浏览历史</span></div><div class="top-actions"><button id="open-tab" class="icon-button" title="在完整页面打开" aria-label="在完整页面打开"><svg viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6"/></svg></button><button id="compact-settings" class="icon-button" title="偏好与数据" aria-label="偏好与数据"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></svg></button><button id="pause" class="recording-button" role="switch" aria-checked="true"><span class="status-dot"></span><span id="pause-label">记录已开启</span><svg viewBox="0 0 16 16"><path d="M6 4v8m4-8v8"/></svg></button></div></header>
+      <main>
+        <div id="error-banner" class="error-banner" role="alert" hidden><span id="error-text"></span><button id="retry">重试</button></div>
+        <section id="history-view">
+          <div class="page-heading"><div><p class="eyebrow">YOUR PERSONAL REWIND</p><h1>你看过的，<span>都在这里。</span></h1><p class="subtitle">记不清原话也没关系，从一个关键词开始。</p></div><button id="export" class="button secondary"><svg viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></svg>导出备份</button></div>
+          <div id="welcome" class="welcome" hidden><div><strong>欢迎使用 Seen</strong><p>打开或刷新 X，正常浏览即可。帖子至少一半可见并停留 1 秒后，会自动出现在这里。</p></div><button id="dismiss-welcome" class="icon-button" aria-label="关闭欢迎提示">×</button></div>
+          <form id="search-form" role="search">
+            <div class="search-box"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search" type="search" maxlength="300" placeholder="搜索正文、作者或引用内容…" aria-label="搜索浏览历史" autocomplete="off"><kbd>/</kbd></div>
+            <div class="filters"><label class="author-filter"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></svg><input id="author" placeholder="作者 @用户名" aria-label="按作者用户名筛选" maxlength="16" autocomplete="off"></label><label><span class="sr-only">媒体类型</span><select id="media"><option value="">全部内容</option><option value="text">纯文字</option><option value="image">有图片</option><option value="video">有视频 / GIF</option><option value="article">文章</option></select></label><label><span class="sr-only">浏览日期范围</span><select id="date-range"><option value="all">全部时间</option><option value="today">今天</option><option value="7">最近 7 天</option><option value="30">最近 30 天</option><option value="custom">自定义日期</option></select></label><button id="reset" type="button" class="text-button" hidden>重置筛选</button></div>
+            <div id="custom-dates" class="custom-dates" hidden><label>开始日期<input id="date-from" type="date"></label><span>至</span><label>结束日期<input id="date-to" type="date"></label><span class="muted">按浏览日期筛选</span></div>
+          </form>
+          <div class="overview" aria-label="历史概况"><div><span class="metric-label">已记住的帖子</span><strong id="total-count">—</strong><span class="metric-foot">此浏览器中的浏览记忆</span></div><div><span class="metric-label">最近一次浏览</span><strong id="last-capture" class="metric-date">还没有</strong><span class="metric-foot" id="capture-hint">去 X 看看，Seen 会帮你记住</span></div><div class="privacy-metric"><div class="privacy-icon"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6"/></svg></div><strong>本地优先，安心浏览</strong><span class="metric-foot">正文保存在本机 · 无云端同步</span></div></div>
+
+          <div class="result-heading"><div><h2 id="result-title">全部历史</h2><span id="result-count" class="count-pill">0</span><span id="search-state" class="muted" role="status"></span></div><label><span class="sr-only">排序</span><select id="sort"><option value="newest">最近看过优先</option><option value="oldest">最早看过优先</option></select></label></div>
+          <div id="selection-bar" class="selection-bar" hidden><span id="selection-label"></span><button id="delete-selected" class="text-button danger-text">删除所选</button><button id="cancel-selection" class="text-button">取消</button></div>
+          <div id="empty" class="empty" hidden><div class="empty-icon"><svg viewBox="0 0 48 48"><path d="M9 23a15 15 0 1 1 4 11M9 15v8h8m7-9v11l7 4"/></svg></div><h3 id="empty-title">让看过的好内容，有迹可循。</h3><p id="empty-description">开启记录后，去 X 正常浏览。<br>你的第一条浏览记忆就会出现在这里。</p><a id="go-x" class="button primary" href="https://x.com/home" target="_blank" rel="noopener noreferrer">去 X 浏览 <span>↗</span></a></div>
+          <div id="results" aria-label="浏览历史记录" aria-busy="false"></div>
+          <div id="pagination" class="pagination" hidden><button id="previous" class="button secondary">← 上一页</button><span id="page-label" class="muted"></span><button id="next" class="button secondary">下一页 →</button></div>
+          <footer class="history-footer"><span class="status-dot"></span>只有真正停留的帖子，才值得被记住。<span class="footer-shortcut">⌥ ⇧ H 打开历史</span></footer>
+        </section>
+        <section id="settings-view" hidden>
+          <button id="back-history" class="text-button">← 返回浏览历史</button><div class="page-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h1>偏好与数据</h1><p class="subtitle">按自己的节奏记录，随时掌握你的数据。</p></div></div>
+          <div class="settings-card"><h2>记录偏好</h2><label class="setting-row"><span><strong>判定看过的停留时间</strong><small>前台窗口内，至少一半帖子可见；长帖按屏幕高度计算。</small></span><select id="setting-dwell"><option value="800">0.8 秒</option><option value="1000">1 秒（推荐）</option><option value="1500">1.5 秒</option><option value="2000">2 秒</option></select></label><label class="setting-row"><span><strong>跳过广告</strong><small>跳过能从页面中识别出的推广内容。</small></span><input type="checkbox" id="setting-ads" role="switch"></label><label class="setting-row"><span><strong>显示图片预览</strong><small>默认关闭。开启后按需从 X 图片服务器加载；图片不保存在备份中。</small></span><input type="checkbox" id="setting-images" role="switch"></label><label class="setting-row"><span><strong>外观</strong><small>选择适合你的阅读环境。</small></span><select id="setting-theme"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label></div>
+          <div class="settings-card"><h2>存储与备份</h2><label class="setting-row"><span><strong>保存时长</strong><small>按最后浏览时间计算。缩短时长将立即清理过期记录。</small></span><select id="setting-retention"><option value="0">不按时间清理</option><option value="30">30 天</option><option value="90">90 天</option><option value="180">180 天</option><option value="365">1 年</option></select></label><label class="setting-row"><span><strong>最多保存</strong><small>超过上限时自动移除最早看过的记录，建议定期备份。</small></span><select id="setting-limit"><option value="5000">5,000 条</option><option value="20000">20,000 条（推荐）</option><option value="50000">50,000 条</option></select></label><div class="setting-row"><span><strong>本机空间用量</strong><small id="storage-detail">计算中…</small></span><span id="storage-size" class="count-pill">—</span></div><div class="setting-row"><span><strong>迁移你的浏览记忆</strong><small>JSON 备份包含正文、链接与浏览时间。重复导入会合并，不增加浏览次数。</small></span><div class="button-group"><button id="settings-export" class="button secondary">导出</button><button id="import" class="button secondary">导入</button></div></div><input id="import-file" type="file" accept=".json,application/json" hidden><div class="setting-row danger-row"><span><strong>清空所有历史并暂停</strong><small>此操作无法撤销，建议先导出备份。</small></span><button id="clear" class="button danger">清空历史</button></div></div>
+          <div class="settings-card"><h2>记录诊断</h2><p class="muted">安装或更新后，请刷新已经打开的 X 页面。私信、Grok 和账号设置页面不会采集。</p><button id="diagnose" class="button secondary">检查已打开的 X 标签页</button><p id="diagnosis" role="status" class="diagnosis"></p></div>
+          <div class="privacy-note"><strong>关于你的数据</strong><p>Seen 只读取 X / Twitter 页面中已经显示的帖子，不调用 X 接口，不记录私信，不上传历史，也没有统计埋点。历史属于当前浏览器的当前用户配置；卸载扩展会删除本地数据。它无法找回安装前看过的帖子，也不保证已删除帖子的图片仍可访问。</p></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div id="toast" role="status" class="toast" hidden></div>
+  <dialog id="confirm-dialog"><form method="dialog"><div class="dialog-icon">!</div><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button class="button secondary" value="cancel" autofocus>取消</button><button id="confirm-action" class="button danger" value="confirm">确认</button></div></form></dialog>
+  <script src="ui.js" type="module"></script>
+</body>
+</html>

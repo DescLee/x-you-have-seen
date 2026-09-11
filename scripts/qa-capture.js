@@ -1,0 +1,58 @@
+async (page) => {
+  const context = page.context();
+  const ui = context.pages().find(p => p.url().startsWith('chrome-extension://'));
+  const rpc = (message) => ui.evaluate(message => chrome.runtime.sendMessage(message), message);
+  const checks = [];
+  const assert = (value, label) => { if (!value) throw new Error(label); checks.push(label); };
+  await rpc({ type: 'clear' }); await rpc({ type: 'settings', settings: { paused: false } });
+  for (const p of context.pages()) if (p.url().includes('seen-fixture')) await p.close();
+  await context.unroute('https://x.com/seen-fixture');
+  await context.route('https://x.com/seen-fixture', route => route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><html><head><meta charset="utf-8"><title>Seen capture regression</title><style>body{margin:0;font:16px sans-serif}article{height:350px;border:1px solid #ddd;width:600px;padding:20px;box-sizing:border-box}main{min-height:3500px}</style></head><body><main></main></body></html>'}));
+  const fixture = await context.newPage(); await fixture.goto('https://x.com/seen-fixture');
+  const mount = async (id, options = {}) => fixture.evaluate(({id, options}) => {
+    const quote = options.quote ? '<div data-testid="quoteTweet"><a href="/bob/status/9999999999999"><time>quote time</time></a><div data-testid="tweetText">引用中的向量数据库</div></div>' : '';
+    document.querySelector('main').innerHTML = `<article data-testid="tweet" style="height:${options.tall ? 3500 : 350}px"><div data-testid="User-Name"><a href="/alice">Alice 中文</a><a href="/alice">@alice</a><a href="/alice/status/${id}"><time datetime="2026-09-09T12:00:00Z">1h</time></a></div><div data-testid="tweetText">Claude Code 多智能体工作流 ${id}<img alt="🧠" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="></div>${quote}${options.video ? '<div data-testid="videoPlayer"></div>' : ''}${options.ad ? '<span data-testid="promotedIndicator">广告</span>' : ''}</article>`;
+    scrollTo(0, 0);
+  }, {id, options});
+  const ids = async () => (await rpc({ type: 'export-page' })).posts.map(p => p.id);
+  const settle = () => fixture.waitForTimeout(1700);
+  await fixture.bringToFront();
+  await mount('1111111111111'); await settle();
+  assert((await ids()).includes('1111111111111'), '前台可见停留 1 秒后采集');
+  let rows = (await rpc({type:'export-page'})).posts;
+  assert(rows[0].text.includes('多智能体') && rows[0].text.includes('🧠'), '中文和 emoji 正确提取');
+  await mount('2222222222222'); await fixture.waitForTimeout(200); await fixture.evaluate(() => scrollTo(0, 1500)); await settle();
+  assert(!(await ids()).includes('2222222222222'), '快速划过不采集');
+  await ui.bringToFront(); await mount('3333333333333'); await settle();
+  assert(!(await ids()).includes('3333333333333'), '隐藏标签页不采集');
+  await fixture.bringToFront(); await settle(); assert((await ids()).includes('3333333333333'), '回到前台后恢复采集');
+  await fixture.evaluate(() => history.pushState({}, '', '/messages')); await mount('4444444444444'); await settle();
+  assert(!(await ids()).includes('4444444444444'), 'SPA 进入私信后停止采集');
+  await fixture.evaluate(() => history.pushState({}, '', '/home')); await settle();
+  assert((await ids()).includes('4444444444444'), '从私信返回时间线无需刷新即恢复');
+  await rpc({ type:'settings', settings:{paused:true} }); await mount('5555555555555'); await settle();
+  assert(!(await ids()).includes('5555555555555'), '暂停即时跨标签生效');
+  await rpc({ type:'settings', settings:{paused:false} }); await settle();
+  assert((await ids()).includes('5555555555555'), '恢复开关继续采集');
+  await mount('6666666666666', {tall:true, quote:true, video:true}); await settle();
+  rows = (await rpc({type:'export-page'})).posts;
+  const long = rows.find(p=>p.id==='6666666666666');
+  assert(!!long, '超过屏幕高度的长帖能够采集');
+  assert(long.quotedText.includes('向量数据库') && !long.text.includes('向量数据库') && long.media==='video', '主帖、引用和视频类型正确归属');
+  assert(!rows.some(p=>p.id==='9999999999999'), '引用内容不会误认成主帖');
+  await fixture.evaluate(() => { document.querySelector('[data-testid="tweetText"]').textContent += ' 展开后的隐藏正文'; });
+  await fixture.waitForTimeout(900);
+  assert((await rpc({type:'export-page'})).posts.find(p=>p.id==='6666666666666').text.includes('隐藏正文'), '展开正文后补全已保存内容');
+  await mount('7777777777777', {ad:true}); await settle();
+  assert(!(await ids()).includes('7777777777777'), '推广标记的帖子跳过');
+  // React-style recycled article node keeps identity but changes its descendant links/text.
+  await fixture.evaluate(() => { const article = document.querySelector('article'); article.querySelector('[data-testid="promotedIndicator"]').remove(); article.querySelector('time').closest('a').setAttribute('href','/alice/status/8888888888888'); article.querySelector('[data-testid="tweetText"]').textContent='DOM 复用后的新帖子'; });
+  await settle(); assert((await ids()).includes('8888888888888'), 'DOM 节点复用时识别新帖子');
+  await ui.bringToFront(); await fixture.bringToFront(); await settle();
+  assert((await rpc({type:'export-page'})).posts.find(p=>p.id==='8888888888888').viewCount === 1, '短时间反复切换不重复计数');
+  await ui.bringToFront();
+  await ui.reload(); await ui.waitForFunction(() => document.querySelectorAll('.post').length > 0);
+  assert(await ui.locator('.post').count() === (await ids()).length, '刷新历史页后数据仍在');
+  await ui.screenshot({path:'output/playwright/capture-history.png',fullPage:true});
+  return {checks, total:(await ids()).length};
+}

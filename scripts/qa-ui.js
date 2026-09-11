@@ -1,0 +1,80 @@
+async (page) => {
+  const ui=page.context().pages().find(p=>p.url().startsWith('chrome-extension://'));
+  await ui.bringToFront();
+  const errors=[];ui.on('pageerror',error=>errors.push(error.message));
+  const checks=[];const assert=(condition,label)=>{if(!condition)throw new Error(label);checks.push(label);};
+  const rpc=message=>ui.evaluate(message=>chrome.runtime.sendMessage(message),message);
+  await rpc({type:'clear'});
+  const base=Date.now()-1000;
+  const stories=[
+    ['lin_design','林间设计','一个好的界面，应该帮用户少做一次选择。\n\n最近在整理设计系统，最大的收获是：先定义使用场景，再定义组件。留白和层级，往往比多加一个按钮更有用。','image'],
+    ['alice_dev','Alice Chen','Building a local-first browser extension with IndexedDB.\n\nYour browsing history should stay yours. Fast search, no server, no account required.','text'],
+    ['muzi_ai','木子','Claude Code 多智能体协作实践：\n1. 先把任务分解为可验证的步骤\n2. 每个 Agent 只负责一个清晰的问题\n3. 让测试为最终结果负责\n\n附上我这周的工作流，欢迎交流。','video'],
+    ['zhou_notes','小周的笔记','今天学到的一个小技巧：性能优化的第一步，是先测量。别急着加缓存，先看看时间到底花在哪里。','text']
+  ];
+  const posts=Array.from({length:135},(_,i)=>{const [authorHandle,authorName,text,media]=stories[i%4];return {id:String(4000000000000+i),authorHandle,authorName,text,media,quotedText:i===2?'让每一次修改，都有可以重复的验证方式。':'',images:[],postedAt:base-i*3600000,firstViewedAt:base-i*3600000,lastViewedAt:base-i*3600000,viewCount:1,dwellMs:1000};});
+  posts[10].authorName='<img src=x onerror=alert(1)>';
+  posts[10].text='<script>alert("unsafe")</script> & <b>literal text</b>';
+  const backup={format:'seen-backup',version:1,posts};
+  const imported=await rpc({type:'import',backup});assert(imported.ok,'模拟记录准备成功');
+  await ui.setViewportSize({width:1360,height:980});
+  await ui.goto(ui.url().split('?')[0]);await ui.waitForFunction(()=>document.querySelectorAll('.post').length===50);
+  if(await ui.locator('#dismiss-welcome').isVisible())await ui.locator('#dismiss-welcome').click();
+  await ui.evaluate(()=>scrollTo(0,0));
+  await ui.screenshot({path:'output/playwright/history-desktop.png'});
+  assert(await ui.locator('.post').count()===50,'历史每页最多 50 条，限制 DOM 数量');
+  const first=await ui.locator('.post').first().getAttribute('data-id');
+  await ui.locator('#next').click();await ui.waitForFunction(()=>document.querySelector('#page-label').textContent.includes('第 2 页'));
+  assert(await ui.locator('.post').first().getAttribute('data-id')!==first,'下一页切换成功');
+  await ui.locator('#previous').click();await ui.waitForFunction(()=>document.querySelector('#page-label').textContent.includes('第 1 页'));
+  assert(await ui.locator('.post').first().getAttribute('data-id')===first,'上一页回到相同记录');
+  await ui.locator('#search').fill('多智能体');await ui.waitForFunction(()=>document.querySelector('#result-count').textContent==='33');
+  assert(await ui.locator('mark').count()>0,'中文关键词搜索与高亮');
+  await ui.locator('#author').fill('@muzi_ai');await ui.locator('#media').selectOption('video');
+  await ui.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');
+  assert(await ui.locator('.post').count()===33,'作者与媒体组合筛选');
+  await ui.locator('#search').fill('绝不会命中xyz');await ui.waitForFunction(()=>!document.querySelector('#empty').hidden);
+  assert(await ui.locator('#empty-title').textContent()==='暂时没有找到这段记忆。','空搜索结果提示');
+  await ui.locator('#reset').click();await ui.waitForFunction(()=>document.querySelectorAll('.post').length===50);
+  await ui.locator('#date-range').selectOption('custom');
+  await ui.locator('#date-from').fill('2026-09-10');await ui.locator('#date-to').fill('2026-09-01');
+  await ui.waitForFunction(()=>!document.querySelector('#error-banner').hidden);
+  assert((await ui.locator('#error-text').textContent()).includes('开始日期'),'反向日期范围有明确错误提示');
+  await ui.locator('#reset').click();await ui.waitForFunction(()=>document.querySelectorAll('.post').length===50);
+  await ui.locator('#search').fill('literal text');await ui.waitForFunction(()=>document.querySelectorAll('.post').length===1);
+  assert(await ui.locator('.post script, .post b, .post img').count()===0,'不可信 HTML 作为纯文字呈现');
+  await ui.locator('.post-select').check();await ui.locator('#delete-selected').click();await ui.locator('#confirm-dialog button[value="cancel"]').click();
+  assert((await rpc({type:'status'})).count===135,'取消删除不会改变数据');
+  await ui.locator('#delete-selected').click();await ui.locator('#confirm-action').click();await ui.waitForFunction(()=>document.querySelector('#total-count').textContent==='134');
+  assert((await rpc({type:'status'})).count===134,'批量删除与确认生效');
+  await ui.locator('#reset').click();
+  await ui.locator('#nav-settings').click();
+  await ui.locator('#setting-theme').selectOption('dark');await ui.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
+  await ui.locator('#back-history').click();await ui.evaluate(()=>scrollTo(0,0));
+  await ui.screenshot({path:'output/playwright/history-dark.png'});
+  assert(await ui.locator('html').getAttribute('data-theme')==='dark','深色外观即时生效');
+  await ui.locator('#nav-settings').click();await ui.locator('#setting-theme').selectOption('light');
+  await ui.waitForFunction(()=>document.documentElement.dataset.theme==='light');
+  const downloadPromise=ui.waitForEvent('download');await ui.locator('#settings-export').click();const download=await downloadPromise;
+  await download.saveAs('output/playwright/roundtrip-backup.json');assert(download.suggestedFilename().startsWith('seen-backup-'),'JSON 备份可下载');
+  await ui.locator('#import-file').setInputFiles('output/playwright/roundtrip-backup.json');await ui.locator('#confirm-action').click();
+  await ui.waitForFunction(()=>document.querySelector('#toast').textContent.includes('合并后保留'));
+  assert((await rpc({type:'status'})).count===134,'通过文件导入备份不产生重复');
+  await ui.locator('#setting-retention').selectOption('30');await ui.locator('#confirm-dialog button[value="cancel"]').click();
+  await ui.waitForFunction(()=>document.querySelector('#setting-retention').value==='0');
+  assert(await ui.locator('#setting-retention').inputValue()==='0','取消自动清理规则变更');
+  await ui.locator('#clear').click();await ui.locator('#confirm-action').click();await ui.waitForFunction(()=>document.querySelector('#total-count').textContent==='0');
+  const cleared=await rpc({type:'status'});assert(cleared.count===0&&cleared.settings.paused,'清空历史会同时暂停采集');
+  await ui.locator('#import-file').setInputFiles('output/playwright/roundtrip-backup.json');await ui.locator('#confirm-action').click();
+  await ui.waitForFunction(()=>document.querySelector('#total-count').textContent==='134');
+  assert((await rpc({type:'status'})).count===134,'清空后从备份恢复全部数据');
+  await ui.locator('#back-history').click();await ui.setViewportSize({width:360,height:850});await ui.evaluate(()=>scrollTo(0,0));
+  await ui.screenshot({path:'output/playwright/history-sidepanel.png'});
+  assert(await ui.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'360px 侧栏无横向溢出');
+  await ui.locator('#compact-settings').click();assert(await ui.locator('#settings-view').isVisible(),'侧栏偏好入口可用');
+  await ui.screenshot({path:'output/playwright/settings-sidepanel.png'});
+  assert(await ui.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'360px 设置无横向溢出');
+  await ui.locator('#back-history').click();await ui.setViewportSize({width:1360,height:980});await ui.evaluate(()=>scrollTo(0,0));
+  assert(errors.length===0,'整个交互流程无未捕获 JavaScript 异常');
+  return {checks,errors};
+}

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Seen · X 浏览历史",
+  "description": "自动记住你在 X / Twitter 看过的帖子，在浏览器本地搜索和找回。无账号、无上传。",
+  "version": "0.1.0",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage", "sidePanel", "alarms", "scripting", "tabs"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*", "https://www.x.com/*", "https://www.twitter.com/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "打开 Seen 浏览历史", "default_icon": { "16": "icons/16.png", "32": "icons/32.png" } },
+  "side_panel": { "default_path": "history.html" },
+  "options_ui": { "page": "history.html?view=settings", "open_in_tab": true },
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "content_scripts": [{
+    "matches": ["https://x.com/*", "https://twitter.com/*", "https://www.x.com/*", "https://www.twitter.com/*"],
+    "js": ["content.js"], "run_at": "document_idle"
+  }],
+  "commands": {
+    "open-history": { "suggested_key": { "default": "Alt+Shift+H", "mac": "Alt+Shift+H" }, "description": "打开 Seen 历史页" }
+  },
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'; img-src 'self' data: https://pbs.twimg.com; style-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'" }
+}

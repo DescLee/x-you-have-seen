@@ -120,4 +120,6 @@ release/   ZIP and checksum output
 
 ## License
 
-No license file is included yet. Add a license that matches your redistribution and commercial-use goals before publishing derivatives.
+This project is licensed under the [Apache License 2.0](LICENSE). Copyright 2026 DescLee.
+
+Use, modification, and redistribution, including commercial use, are permitted subject to the license terms. Redistribution requires retaining applicable notices, including a copy of the license, and identifying modified files. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party dependencies retain their respective licenses.

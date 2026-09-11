@@ -2,6 +2,7 @@ import { build, context } from 'esbuild';
 import { cp, mkdir, rm } from 'node:fs/promises';
 await mkdir('dist', { recursive: true });
 await cp('public', 'dist', { recursive: true });
+for (const file of ['LICENSE', 'NOTICE']) await cp(file, `dist/${file}`);
 const configs = [
   { entryPoints: ['src/background.ts', 'src/ui.ts', 'src/search-worker.ts', 'src/backup-worker.ts'], outdir: 'dist', format: 'esm' },
   { entryPoints: ['src/content.ts'], outfile: 'dist/content.js', format: 'iife' }

@@ -67,4 +67,6 @@ Les tests couvrent la visibilité, le temps de lecture, la fusion, la recherche 
 
 ## Licence
 
-Aucun fichier de licence n’est encore fourni. Ajoutez la licence correspondant à vos objectifs de redistribution et d’usage commercial avant de publier des dérivés.
+Ce projet est distribué sous la [licence Apache 2.0](LICENSE). Copyright 2026 DescLee.
+
+L’utilisation, la modification et la redistribution, y compris à des fins commerciales, sont autorisées sous réserve des conditions de la licence. Toute redistribution doit conserver les mentions applicables, inclure une copie de la licence et signaler les fichiers modifiés. Consultez [LICENSE](LICENSE) et [NOTICE](NOTICE). Les dépendances tierces restent soumises à leurs licences respectives.

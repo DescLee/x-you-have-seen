@@ -90,6 +90,8 @@ Seen 解决的是一个很具体的问题：X 的时间线更新很快，收藏�
 环境要求：Node.js 18+，Chrome 116+ 或对应版本的 Edge。
 
 ```bash
+git clone https://github.com/DescLee/x-you-have-seen.git
+cd x-you-have-seen
 npm install
 npm run build
 ```

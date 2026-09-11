@@ -1,5 +1,7 @@
 # Seen · X 浏览历史
 
+**语言 / Languages:** [简体中文](README.md) · [English](README.en.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
+
 Seen 是一个面向桌面浏览器的 Chrome / Edge Manifest V3 扩展。它会在你正常浏览 X（原 Twitter）时间线时，判断哪些帖子真正进入了视口并停留了足够时间，把这些内容保存在本机；之后可以在 X 页面右侧直接搜索、筛选和找回，也可以打开独立历史页进行管理。
 
 Seen 解决的是一个很具体的问题：X 的时间线更新很快，收藏、点赞和浏览记录并不能准确回答“我刚才看过的那条帖子在哪里”。Seen 不依赖 X API，不要求登录额外账号，也不会把浏览内容上传到服务器。
